@@ -1,0 +1,33 @@
+#Configure Http services
+   - name: install packages
+     yum: name=php-mysql state=latest
+   - name: install httpd
+     become: yes
+     become_method: su
+     yum: name=httpd state=present
+   - name: altering httpd for  php
+     replace:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: 'DirectoryIndex index.html'
+      replace: "DirectoryIndex index.php"
+      backup: yes
+   - name: Enabled httpd and start
+     systemd: name=httpd enabled=yes state=started
+   - name: Install git
+     yum: name=git state=latest
+   - name: get git files
+     git:
+      repo: https://github.com/kodekloudhub/learning-app-ecommerce.git
+      dest: /var/www/html
+      update: no
+   - name: change index
+     replace:
+      path: /var/www/html/index.php
+      regexp: "{{ item.original }}"
+      replace: "{{ item.new }}"
+     with_items:
+      - { original: '172.20.1.101' , new: 'localhost' }
+      - { original: 'ecomuser' , new: 'root' }
+      - { original: 'ecompassword' , new: 'osboxes.org' }
+   - name: restart httpd instace
+     service: name=httpd state=restarted
